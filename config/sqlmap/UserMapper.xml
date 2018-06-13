@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="test">
+
+    <resultMap id="userResultMap" type="cn.com.mybatis.po.User">
+        <id column="_id" property="id"/>
+        <result column="_username" property="username"/>
+    </resultMap>
+
+
+    <!--<resultMap id="shoppingResult" type="cn.com.mybatis.po.ShoppingCart">-->
+        <!--<id property="scartid" column="cart_id"/>-->
+        <!--<result property="pname" column="product_name"/>-->
+        <!--<association property="user" javaType="cn.com.mybatis.po.User">-->
+            <!--<id property="id" column="user_id"/>-->
+            <!--<result property="username" column="user_username"/>-->
+            <!--<result property="gender" column="user_gender"/>-->
+            <!--<result property="email" column="user_email"/>-->
+        <!--</association>-->
+    <!--</resultMap>-->
+
+    <select id="queryShoppingCart" parameterType="int" resultMap="shoppingResult">
+        SELECT
+          S.id AS cart_id,
+          S.name AS product_name,
+          S.userid AS cart_user_id,
+          U.id AS user_id,
+          U.username AS user_username,
+          U.gender AS user_gender,
+          U.email AS user_email
+        FROM shoppingcart S LEFT OUTER JOIN user U ON S.userid = U.id
+        WHERE S.id = #{id}
+    </select>
+
+    <resultMap id="shoppingResult" type="cn.com.mybatis.po.ShoppingCart">
+        <id property="scartid" column="cart_id"/>
+        <result property="pname" column="product_name"/>
+        <association property="user" column="cart_user_id" javaType="cn.com.mybatis.po.User" resultMap="userResult"/>
+    </resultMap>
+
+    <resultMap id="userResult" type="cn.com.mybatis.po.User">
+        <id property="id" column="user_id"/>
+        <result property="username" column="user_username"/>
+        <result property="gender" column="user_gender"/>
+        <result property="email" column="user_email"/>
+    </resultMap>
+    
+    <resultMap id="productResult" type="cn.com.mybatis.po.Product">
+        <id property="pid" column="product_id"/>
+        <result property="pname" column="product_name"/>
+        <collection property="replys" select="queryReplyByProductId" column="product_id" ofType="Reply"/>
+    </resultMap>
+    
+
+    <select id="findUserByResultMap" parameterType="int" resultMap="userResultMap">
+        SELECT id _id, username _username FROM user WHERE id=#{value}
+    </select>
+
+    <select id="findUserList" parameterType="cn.com.mybatis.po.UserQueryInfo" resultType="cn.com.mybatis.po.UserInstance">
+        SELECT * FROM user WHERE user.gender=#{userInstance.gender} AND user.username LIKE '%${userInstance.username}%'
+    </select>
+
+
+    <select id="findUserById" parameterType="int" resultType="cn.com.mybatis.po.User">
+        SELECT * FROM USER WHERE id=#{id}
+    </select>
+
+    <select id="findUserByUsername" parameterType="java.lang.String" resultType="cn.com.mybatis.po.User">
+        SELECT * FROM USER WHERE username LIKE '%${value}%'
+    </select>
+
+    <select id="findBatchCustomer" resultType="cn.com.mybatis.po.BatchCustomer">
+        SELECT
+		  BATCH.*,
+		  CUSTOMER.username,
+		  CUSTOMER.acno
+		FROM
+		  BATCH,
+		  CUSTOMER
+		WHERE BATCH.cus_id = CUSTOMER.cus_id
+    </select>
+
+    <resultMap id="BatchInfoMap" type="cn.com.mybatis.po.BatchItem">
+        <id column="batch_id" property="batch_id"/>
+        <result column="cus_id" property="cus_id"/>
+        <result column="number" property="number"/>
+        <result column="createtime" property="createtime" javaType="java.util.Date"/>
+        <result column="note" property="note"/>
+        <association property="customer" javaType="cn.com.mybatis.po.Customer">
+            <id column="cus_id" property="cus_id"/>
+            <result column="username" property="username"/>
+            <result column="acno" property="acno"/>
+            <result column="gender" property="gender"/>
+            <result column="phone" property="phone"/>
+        </association>
+    </resultMap>
+
+    <select id="findBatchCustomerToMap" resultMap="BatchInfoMap">
+        SELECT BATCH.*, CUSTOMER.username, CUSTOMER.acno
+        FROM BATCH, CUSTOMER
+        WHERE BATCH.cus_id = CUSTOMER.cus_id
+    </select>
+
+
+    <resultMap id="BatchAndBatchDetailResultMap" type="cn.com.mybatis.po.BatchItem" extends="BatchInfoMap">
+        <collection property="batchDetails" ofType="cn.com.mybatis.po.BatchDetail">
+            <id column="id" property="id"/>
+            <result column="batch_id" property="batch_id"/>
+            <result column="product_id" property="product_id"/>
+            <result column="product_id" property="product_num"/>
+        </collection>
+    </resultMap>
+
+    <select id="findBatchAndBatchDetail" resultMap="BatchAndBatchDetailResultMap">
+        SELECT batch.`*` , customer.username, customer.acno, batchdetail.product_id, batchdetail.product_num
+        FROM batch, customer, batchdetail
+        WHERE batch.cus_id = customer.cus_id AND batchdetail.batch_id = batch.batch_id
+    </select>
+
+
+    <resultMap id="UserAndProductsResultMap" type="cn.com.mybatis.po.Customer">
+        <result column="username" property="username"/>
+        <result column="acno" property="acno"/>
+
+        <collection property="batchList" ofType="cn.com.mybatis.po.Batch">
+            <id column="id" property="id"/>
+            <result column="batch_id" property="batch_id"/>
+            <result column="cus_id" property="cus_id"/>
+            <result column="number" property="number"/>
+            <result column="createtime" property="createtime" javaType="java.util.Date"/>
+            <result column="note" property="note"/>
+            <collection property="batchDetailList" ofType="cn.com.mybatis.po.BatchDetail">
+                <id column="id" property="id"/>
+                <result column="batch_id" property="batch_id"/>
+                <result column="product_id" property="product_id"/>
+                <result column="product_num" property="product_num"/>
+                <association property="finacialProduct" javaType="cn.com.mybatis.po.FinacialProduct">
+                    <id column="product_id" property="id"/>
+                    <result column="name" property="name"/>
+                    <result column="price" property="price"/>
+                    <result column="detail" property="detail"/>
+                </association>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="findUserAndProducts" resultMap="UserAndProductsResultMap">
+        SELECT batch.`*` , customer.username, customer.acno, batchdetail.product_id, batchdetail.product_num,
+                            finacial_products.name, finacial_products.detail, finacial_products.price
+        FROM batch, customer, batchdetail, finacial_products
+        WHERE batch.cus_id = customer.cus_id AND batchdetail.batch_id = batch.batch_id AND finacial_products.product_id
+= batchdetail.product_id;
+    </select>
+
+    <!-- 延迟加载的resultMap -->
+    <resultMap id="BatchUserLazyLoadingResultMap" type="cn.com.mybatis.po.BatchItem">
+        <!-- 对订单信息进行映射配置 -->
+        <id column="batch_id" property="batch_id"/>
+        <result column="cus_id" property="cus_id"/>
+        <result column="number" property="number"/>
+        <result column="createtime" property="createtime" javaType="java.util.Date"/>
+        <result column="note" property="note"/>
+        <!-- 实现延迟加载用户信息 -->
+        <association property="customer" javaType="cn.com.mybatis.po.Customer" select="findCustomerById" column="cus_id">
+        </association>
+    </resultMap>
+
+    <select id="findBatchUserLazyLoading" resultMap="BatchUserLazyLoadingResultMap">
+        SELECT * FROM BATCH
+    </select>
+
+    <select id="findCustomerById" parameterType="int" resultType="cn.com.mybatis.po.Customer">
+        SELECT * FROM CUSTOMER WHERE cus_id=#{id}
+    </select>
+
+    <!--方法一-->
+    <!--<insert id="insertUser" parameterType="cn.com.mybatis.po.User">-->
+        <!--<selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">-->
+            <!--SELECT LAST_INSERT_ID()-->
+        <!--</selectKey>-->
+        <!--INSERT INTO USER(username, password, gender, birthday, email, province, city)-->
+        <!--VALUE (#{username}, #{password}, #{gender}, #{birthday, jdbcType=DATE}, #{email}, #{province}, #{city})-->
+    <!--</insert>-->
+
+    <!--方法二-->
+    <insert id="insertUser" parameterType="cn.com.mybatis.po.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO USER(username, password, gender, birthday, email, province, city)
+        VALUE (#{username}, #{password}, #{gender}, #{birthday, jdbcType=DATE}, #{email}, #{province}, #{city})
+    </insert>
+
+    <delete id="deleteUser" parameterType="java.lang.Integer">
+        DELETE FROM USER WHERE id=#{id}
+    </delete>
+
+    <update id="updateUserName" parameterType="cn.com.mybatis.po.User">
+        UPDATE user SET username=#{username} WHERE id=#{id}
+    </update>
+</mapper>
+
+<!--处理User数据的文件-->

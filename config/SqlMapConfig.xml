@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<!--顺序-->
+<!--1.properties-->
+<!--2.settings-->
+<!--3.typeAliases-->
+<!--4.typeHandlers-->
+<!--5.objectFactory-->
+<!--6.plugins-->
+<!--7.environments-->
+
+<configuration>
+    <properties resource="db.properties">
+        <property name="org.apache.ibatis.parsing.PropertyParser.enable-default-value" value="true"/>
+        <property name="username" value="root"/>
+        <property name="password" value="Waz123456."/>
+    </properties>
+    <settings>
+
+        <setting name="logImpl" value="LOG4J"/>
+        <!--打开延迟加载开关-->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <!--将积极加载改为消极加载（即按需加载）-->
+        <setting name="aggressiveLazyLoading" value="false"/>
+    </settings>
+    <typeAliases>
+        <typeAlias alias="integer" type="java.lang.Integer"/>
+    </typeAliases>
+    <objectFactory type="cn.com.mybatis.test.CartObjectFactory"/>
+    <plugins>
+        <plugin interceptor="cn.com.mybatis.test.QueryPlugin">
+            <property name="someProperty" value="100"/>
+        </plugin>
+    </plugins>
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="${driver}"/>
+                <property name="url" value="${url}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <mapper resource="sqlmap/UserMapper.xml"/>
+        <mapper resource="sqlmap/CustomerMapper.xml"/>
+    </mappers>
+</configuration>
